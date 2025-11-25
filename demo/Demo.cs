@@ -51,7 +51,7 @@ public partial class Demo : Node2D
 
 #pragma warning disable LIMBO1002 // Invalid AutoComplete Attribute Usage
     /// <summary>
-    /// An example of a command ignoring an error but the source generator will still genrate code that compiles
+    /// An example of a command ignoring an error but the source generator will still generate code that compiles
     /// It just skips over this method when trying to create the <see cref="RegisterConsoleCommands"/>
     /// </summary>
     /// <param name="numbers"></param>

@@ -9,7 +9,7 @@
 
     <!-- NuGet Package Metadata -->
     <PackageId>LimboConsole.Sharp</PackageId>
-    <Version>0.0.1-beta-008</Version>
+    <Version>0.0.1-beta-009</Version>
     <Authors>RcubDev</Authors>
     <Description>A simple c# wrapper for the limbo_console plug-in for godot.
       See https://github.com/limbonaut/limbo_console
@@ -31,7 +31,7 @@
     <None Include="..\CHANGELOG.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="GodotSharp" Version="[4.4.0, 4.5.0)" />
+    <PackageReference Include="GodotSharp" Version="[4.4.0, 5.0.0)" />
   </ItemGroup>
   <Target Name="WriteVersionToFile" AfterTargets="Build">
     <WriteLinesToFile File="$(VersionFilePath)" Lines="$(Version)" Overwrite="true" />
