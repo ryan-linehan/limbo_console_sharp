@@ -8,7 +8,7 @@ namespace Limbo.Console.Sharp
     /// <remarks>
     /// Placed on the ConsoleCommand function
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = true)]
     public sealed class AutoCompleteAttribute : Attribute {
         
         /// <summary>

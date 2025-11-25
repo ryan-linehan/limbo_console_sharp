@@ -49,9 +49,40 @@ public partial class Demo : Node2D
         LimboConsole.Info("AttributeCommandWithArg executed with arg: " + arg1);
     }
 
+#pragma warning disable LIMBO1002 // Invalid AutoComplete Attribute Usage
+    /// <summary>
+    /// An example of a command ignoring an error but the source generator will still genrate code that compiles
+    /// It just skips over this method when trying to create the <see cref="RegisterConsoleCommands"/>
+    /// </summary>
+    /// <param name="numbers"></param>
+    /// <param name="colors"></param>
+    [ConsoleCommand]
+    [AutoComplete(nameof(Numbers))]
+    public void ColorsAndNumbers([AutoComplete(nameof(Numbers))] int numbers,
+                                 [AutoComplete(nameof(Colors))] string colors
+                                )
+    {
+        LimboConsole.Info("ColorsAndNumbers command executed with number: " + numbers);
+        LimboConsole.Info("ColorsAndNumbers command executed with color: " + colors);
+    }
+#pragma warning restore LIMBO1002 // Invalid AutoComplete Attribute Usage
+
+
+    [ConsoleCommand]
+    public void SecondParameterAutoCompleted(int numbers, [AutoComplete(nameof(Colors))] string colors)
+    {
+        LimboConsole.Info("ColorsAndNumbers command executed with number: " + numbers);
+        LimboConsole.Info("ColorsAndNumbers command executed with color: " + colors);
+    }
+
     public string[] Colors()
     {
         return new[] { "red", "green", "blue" };
+    }
+
+    public int[] Numbers()
+    {
+        return new[] { 1, 2, 3, 4, 5 };
     }
 
     /// <summary>
@@ -81,6 +112,7 @@ public partial class Demo : Node2D
                                     "Prints Hello World and the value if it is a, b, or c");
         LimboConsole.AddArgumentAutocompleteSource("hello_callable_abc", 1, Callable.From(() => validOptions));
     }
+
     /// <summary>
     /// Removes the callable commands 
     /// </summary>
@@ -159,7 +191,7 @@ public partial class Demo : Node2D
     {
         LimboConsole.PrintLine("Console toggled: " + isShown);
     }
-    
+
     override public void _ExitTree()
     {
         // Unregister all commands to avoid memory leaks

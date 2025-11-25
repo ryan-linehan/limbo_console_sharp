@@ -3,13 +3,13 @@ using Microsoft.CodeAnalysis;
 
 namespace Limbo.Console.Generator.AutoCompletion.Rules
 {
-    internal interface IAutoCompleteValidationRule
+    internal interface IValidationRule
     {
         /// <summary>
-        /// Throws an exception if the auto-completes are invalid for the given method.
+        /// Returns diagnostics results of issues with generator
         /// </summary>
         /// <param name="methodSymbol"></param>
         /// <param name="autoCompletes"></param>
-        void Validate(IMethodSymbol methodSymbol, IEnumerable<AutoCompleteDefinition> autoCompletes);
+        IEnumerable<Diagnostic> Validate(IMethodSymbol methodSymbol, IEnumerable<AutoCompleteDefinition> autoCompletes);
     }
 }

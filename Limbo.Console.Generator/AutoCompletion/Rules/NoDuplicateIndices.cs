@@ -1,27 +1,39 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.CodeAnalysis;
+using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis;
 
 namespace Limbo.Console.Generator.AutoCompletion.Rules
 {
-    internal class NoDuplicateIndices : IAutoCompleteValidationRule
+    internal class NoDuplicateIndices : IValidationRule
     {
-        public void Validate(IMethodSymbol methodSymbol, IEnumerable<AutoCompleteDefinition> autoCompletes)
+        public static readonly DiagnosticDescriptor Descriptor = new DiagnosticDescriptor(
+            id: "LIMBO1001",
+            title: "Duplicate argument indices",
+            messageFormat: "Method has duplicate AutoComplete argument indices defined: {0}",
+            category: "Limbo.Console.Generator",
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true
+        );
+
+        public IEnumerable<Diagnostic> Validate(IMethodSymbol methodSymbol, IEnumerable<AutoCompleteDefinition> autoCompletes)
         {
-            var duplicateArgIndexes = autoCompletes
+            var duplicateArgs = autoCompletes
                                       .GroupBy(ac => ac.ArgIndex)
-                                      .Where(g => g.Count() > 1)
-                                      .Select(g => g.Key)
-                                      .ToList();
+                                      .Where(g => g.Count() > 1).ToList();
 
-            if (!duplicateArgIndexes.Any())
-                return;
+            if (!duplicateArgs.Any())
+                return Enumerable.Empty<Diagnostic>();
 
-            var argList = string.Join(", ", duplicateArgIndexes);
-
-            throw new InvalidAutoCompleteException(
-                $"Method '{methodSymbol.Name}' has multiple AutoComplete attributes for the same argument index: {argList}."
-            );
+            List<Diagnostic> diagnostics = new List<Diagnostic>();
+            foreach (var item in duplicateArgs)
+            {
+                var autoCompleteInfo = duplicateArgs.SelectMany(x => x).ToList();
+                foreach (var duplicate in autoCompleteInfo)
+                {
+                    diagnostics.Add(Diagnostic.Create(Descriptor, duplicate.Location, item.Key));
+                }
+            }
+            return diagnostics;
         }
     }
 }
