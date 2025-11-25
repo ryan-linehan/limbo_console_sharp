@@ -49,6 +49,20 @@ public partial class Demo : Node2D
         LimboConsole.Info("AttributeCommandWithArg executed with arg: " + arg1);
     }
 
+    [ConsoleCommand(description: "A command with inline autocomplete values!")]
+    [AutoComplete(new string[] { "red", "white", "orange", "green" })]
+    public void InlineAutoCompleteCommand(string color)
+    {
+        LimboConsole.Info("InlineAutoCompleteCommand executed with color: " + color);
+    }
+
+    [ConsoleCommand(description: "Multi-arg command with inline autocomplete on second parameter")]
+    [AutoComplete(new string[] { "apple", "banana", "cherry", "date" }, 1)]
+    public void FruitCommand(int quantity, string fruit)
+    {
+        LimboConsole.Info($"FruitCommand executed with quantity: {quantity}, fruit: {fruit}");
+    }
+
 #pragma warning disable LIMBO1002 // Invalid AutoComplete Attribute Usage
     /// <summary>
     /// An example of a command ignoring an error but the source generator will still generate code that compiles

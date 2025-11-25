@@ -118,6 +118,7 @@ You can also use the `[AutoComplete]` attribute to quickly define autocompletes 
 
 > 💡You _must_ call `RegisterConsoleCommands()` to enable your class's [AutoComplete]'s!
 
+**Method-based autocomplete:**
 
 ```csharp
 [ConsoleCommand]
@@ -132,6 +133,38 @@ private string[] Colors() {
 ```
 
 This example adds an auto-complete source for the first argument of the `FavoriteColorCommand` command, suggesting the values `red`, `blue`, and `green`.
+
+**Inline array autocomplete:**
+
+You can also define autocomplete values inline without needing a separate method:
+
+```csharp
+[ConsoleCommand]
+[AutoComplete(new string[] { "red", "white", "orange", "green" })]
+public void ColorCommand(string color) {
+  // Do something
+}
+```
+
+For multi-parameter commands, specify the argument index (note: parameter indices are 0-based):
+
+```csharp
+[ConsoleCommand]
+[AutoComplete(new string[] { "apple", "banana", "cherry", "date" }, 1)]
+public void FruitCommand(int quantity, string fruit) {
+  // Do something with quantity and fruit
+}
+```
+
+In newer C# versions, you can use collection expressions:
+
+```csharp
+[ConsoleCommand]
+[AutoComplete(["red", "white", "orange", "green"])]
+public void ColorCommand(string color) {
+  // Do something
+}
+```
 
 ### More examples
 

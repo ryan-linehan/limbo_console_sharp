@@ -66,11 +66,26 @@ namespace Limbo.Console.Generator.AutoCompletion
         {
             // Add warning for auto complete attributes that are on a parameter but not on a ConsoleCommand method
             // Add warning for auto complete attributes that are on a parameter and use the index value (it will be ignored)
-            var sourceMethod = attr.ConstructorArguments[0].Value as string ?? string.Empty;
+            var firstArg = attr.ConstructorArguments[0];
             var argIndex = attr.ConstructorArguments.Length > 1 ? (int)(attr.ConstructorArguments[1].Value ?? 0) : 0;
             if (index != null)
                 argIndex = index.Value;
-            return new AutoCompleteDefinition(sourceMethod, argIndex, attr.ApplicationSyntaxReference?.GetSyntax()?.GetLocation());
+
+            var location = attr.ApplicationSyntaxReference?.GetSyntax()?.GetLocation();
+
+            // Check if the first argument is a string (method name) or an array (inline values)
+            if (firstArg.Kind == TypedConstantKind.Array)
+            {
+                // Inline array values
+                var values = firstArg.Values.Select(v => v.Value?.ToString() ?? string.Empty).ToArray();
+                return new AutoCompleteDefinition(values, argIndex, location);
+            }
+            else
+            {
+                // Method name
+                var sourceMethod = firstArg.Value as string ?? string.Empty;
+                return new AutoCompleteDefinition(sourceMethod, argIndex, location);
+            }
         }
     }
 }

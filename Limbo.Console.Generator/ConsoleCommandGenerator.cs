@@ -140,6 +140,11 @@ namespace Limbo.Console.Sharp.Generator
             }
         }
 
+        private static string EscapeString(string value)
+        {
+            return value.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
+        }
+
         private static void AddRegisterConsoleCommands(StringBuilder sb, IEnumerable<CommandMethodInfo> methods)
         {
             sb.AppendLine(" private void RegisterConsoleCommands() {");
@@ -158,7 +163,17 @@ namespace Limbo.Console.Sharp.Generator
 
                 foreach (var autoComplete in method.AutoCompletes)
                 {
-                    sb.AppendLine($"    LimboConsole.AddArgumentAutocompleteSource(\"{method.Name}\", {autoComplete.ArgIndex}, Callable.From(() => {autoComplete.SourceMethod}()));");
+                    if (autoComplete.IsInline)
+                    {
+                        // Generate code for inline array values
+                        var values = string.Join(", ", autoComplete.InlineValues.Select(v => $"\"{EscapeString(v)}\""));
+                        sb.AppendLine($"    LimboConsole.AddArgumentAutocompleteSource(\"{method.Name}\", {autoComplete.ArgIndex}, Callable.From(() => new string[] {{ {values} }}));");
+                    }
+                    else
+                    {
+                        // Generate code for method name (existing behavior)
+                        sb.AppendLine($"    LimboConsole.AddArgumentAutocompleteSource(\"{method.Name}\", {autoComplete.ArgIndex}, Callable.From(() => {autoComplete.SourceMethod}()));");
+                    }
                 }
             }
 
