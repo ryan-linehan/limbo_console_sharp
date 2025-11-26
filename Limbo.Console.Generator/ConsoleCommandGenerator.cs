@@ -11,11 +11,24 @@ using Limbo.Console.Generator.AutoCompletion.Rules;
 namespace Limbo.Console.Sharp.Generator
 {
     /// <summary>
-    /// Generates a single function to register all functions in the class labeled with <see cref="ConsoleCommandAttribute"/> 
+    /// Generates a single function to register all functions in the class labeled with <see cref="ConsoleCommandAttribute"/>
     /// </summary>
     [Generator]
     public sealed class ConsoleCommandGenerator : IIncrementalGenerator
     {
+        /// <summary>
+        /// Diagnostic descriptor for classes with ConsoleCommand attributes that don't call RegisterConsoleCommands
+        /// </summary>
+        private static readonly DiagnosticDescriptor UnregisteredCommandsDescriptor = new DiagnosticDescriptor(
+            id: "LIMBO1003",
+            title: "RegisterConsoleCommands not called",
+            messageFormat: "Class '{0}' has [ConsoleCommand] attributes but RegisterConsoleCommands() is not called in any method. Commands will not be registered unless you call this.RegisterConsoleCommands() (typically in _Ready or a similar initialization method).",
+            category: "Limbo.Console.Generator",
+            DiagnosticSeverity.Warning,
+            isEnabledByDefault: true,
+            description: "Classes that use the [ConsoleCommand] attribute must call the generated RegisterConsoleCommands() method to register the commands with the console."
+        );
+
         /// <summary>
         /// Validation rules for console commands
         /// </summary>
@@ -57,6 +70,20 @@ namespace Limbo.Console.Sharp.Generator
                 foreach (var group in grouped)
                 {
                     var typeSymbol = group.Key;
+
+                    // Check if RegisterConsoleCommands is called anywhere in the type
+                    bool hasRegisterCall = TypeHasRegisterConsoleCommandsInvocation(typeSymbol, compilation);
+
+                    if (!hasRegisterCall)
+                    {
+                        // Report diagnostic warning
+                        var diagnostic = Diagnostic.Create(
+                            UnregisteredCommandsDescriptor,
+                            typeSymbol.Locations.FirstOrDefault() ?? Location.None,
+                            typeSymbol.Name);
+                        spc.ReportDiagnostic(diagnostic);
+                    }
+
                     var src = GenerateRegisterFunction(typeSymbol, group.Select(x => x.MethodInfo).ToArray());
                     spc.AddSource($"{typeSymbol.Name}_ConsoleCommands.g.cs", SourceText.From(src, Encoding.UTF8));
                 }
@@ -86,6 +113,35 @@ namespace Limbo.Console.Sharp.Generator
             }
 
             return new CommandMethodResult(info, diagnostics.ToImmutable());
+        }
+
+        private static bool TypeHasRegisterConsoleCommandsInvocation(INamedTypeSymbol typeSymbol, Compilation compilation)
+        {
+            // Get all syntax references for the type
+            foreach (var syntaxRef in typeSymbol.DeclaringSyntaxReferences)
+            {
+                var typeSyntax = syntaxRef.GetSyntax();
+                var semanticModel = compilation.GetSemanticModel(typeSyntax.SyntaxTree);
+
+                // Find all invocation expressions in the type
+                var invocations = typeSyntax.DescendantNodes().OfType<InvocationExpressionSyntax>();
+
+                foreach (var invocation in invocations)
+                {
+                    var symbolInfo = semanticModel.GetSymbolInfo(invocation);
+                    var methodSymbol = symbolInfo.Symbol as IMethodSymbol;
+
+                    // Check if this is a call to RegisterConsoleCommands
+                    if (methodSymbol != null &&
+                        methodSymbol.Name == "RegisterConsoleCommands" &&
+                        SymbolEqualityComparer.Default.Equals(methodSymbol.ContainingType, typeSymbol))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private static string GenerateRegisterFunction(ISymbol classSymbol, CommandMethodInfo[] methods)
