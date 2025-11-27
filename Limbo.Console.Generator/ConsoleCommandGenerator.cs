@@ -157,7 +157,7 @@ namespace Limbo.Console.Sharp.Generator
                     {
                         var fieldName = $"__AutoComplete_{method.Method.Name}_{autoComplete.ArgIndex}_{fieldCounter++}";
                         var values = string.Join(", ", autoComplete.InlineValues.Select(v => $"\"{EscapeString(v)}\""));
-                        sb.AppendLine($"  private static readonly string[] {fieldName} = new string[] {{ {values} }};");
+                        sb.AppendLine($"  private static readonly StringName[] {fieldName} = new StringName[] {{ {values} }};");
                     }
                 }
             }

@@ -50,14 +50,14 @@ public partial class Demo : Node2D
     }
 
     [ConsoleCommand(description: "A command with inline autocomplete values!")]
-    [AutoComplete(new string[] { "red", "white", "orange", "green" })]
+    [AutoComplete(new string[] {"red", "white", "orange", "green"})]     
     public void InlineAutoCompleteCommand(string color)
     {
         LimboConsole.Info("InlineAutoCompleteCommand executed with color: " + color);
     }
 
     [ConsoleCommand(description: "Multi-arg command with inline autocomplete on second parameter")]
-    [AutoComplete(new string[] { "apple", "banana", "cherry", "date" }, 1)]
+    [AutoComplete(["apple", "banana", "cherry", "date" ], 1)] // In C# 12 and later you can use array literals
     public void FruitCommand(int quantity, string fruit)
     {
         LimboConsole.Info($"FruitCommand executed with quantity: {quantity}, fruit: {fruit}");
