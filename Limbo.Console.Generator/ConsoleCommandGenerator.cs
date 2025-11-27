@@ -210,9 +210,7 @@ namespace Limbo.Console.Sharp.Generator
 
             foreach (var method in methods)
             {
-                var callable = method.Method.Parameters.Length == 0
-                    ? $"new Callable(this, nameof({method.Method.Name}))"
-                    : $"new Callable(this, \"{method.Method.Name}\")"; // TODO: consider arg-aware logic
+                var callable = $"new Callable(this, MethodName.{method.Method.Name})";
 
                 var registerCall = method.Description != null
                     ? $"LimboConsole.RegisterCommand({callable}, \"{method.Name}\", \"{method.Description}\");"

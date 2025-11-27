@@ -6,7 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
-- Replace with coming additions, changes, removals, or fixes
+### Changed
+
+- Source generator now uses `MethodName` (Godot's generated StringName constants) instead of string literals or `nameof()` for better performance
+  - Eliminates string-to-StringName conversion overhead on every command registration
+  - Provides consistent type-safe method references for all methods (regardless of parameter count)
+  - Resolves issue #13
 
 ## [0.0.1-beta-008] - 2025-05-31
 
