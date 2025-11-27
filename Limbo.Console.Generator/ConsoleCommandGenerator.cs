@@ -22,7 +22,7 @@ namespace Limbo.Console.Sharp.Generator
         private static readonly DiagnosticDescriptor UnregisteredCommandsDescriptor = new DiagnosticDescriptor(
             id: "LIMBO1003",
             title: "RegisterConsoleCommands not called",
-            messageFormat: "Class '{0}' has [ConsoleCommand] attributes but RegisterConsoleCommands() is not called in any method. Commands will not be registered unless you call this.RegisterConsoleCommands() (typically in _Ready or a similar initialization method).",
+            messageFormat: "Class '{0}' has [ConsoleCommand] attributes but RegisterConsoleCommands() is not called in any method",
             category: "Limbo.Console.Generator",
             DiagnosticSeverity.Warning,
             isEnabledByDefault: true,
@@ -115,7 +115,7 @@ namespace Limbo.Console.Sharp.Generator
             return new CommandMethodResult(info, diagnostics.ToImmutable());
         }
 
-        private static bool TypeHasRegisterConsoleCommandsInvocation(INamedTypeSymbol typeSymbol, Compilation compilation)
+        private static bool TypeHasRegisterConsoleCommandsInvocation(ISymbol typeSymbol, Compilation compilation)
         {
             // Get all syntax references for the type
             foreach (var syntaxRef in typeSymbol.DeclaringSyntaxReferences)
@@ -132,11 +132,19 @@ namespace Limbo.Console.Sharp.Generator
                     var methodSymbol = symbolInfo.Symbol as IMethodSymbol;
 
                     // Check if this is a call to RegisterConsoleCommands
-                    if (methodSymbol != null &&
-                        methodSymbol.Name == "RegisterConsoleCommands" &&
-                        SymbolEqualityComparer.Default.Equals(methodSymbol.ContainingType, typeSymbol))
+                    if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
                     {
-                        return true;
+                        if (memberAccess.Name.Identifier.Text == "RegisterConsoleCommands")
+                        {
+                            return true;
+                        }
+                    }
+                    else if (invocation.Expression is IdentifierNameSyntax identifier)
+                    {
+                        if (identifier.Identifier.Text == "RegisterConsoleCommands")
+                        {
+                            return true;
+                        }
                     }
                 }
             }
