@@ -69,7 +69,7 @@ namespace Limbo.Console.Sharp.Generator
 
                 foreach (var group in grouped)
                 {
-                    var typeSymbol = group.Key;
+                    var typeSymbol = (INamedTypeSymbol)group.Key;
 
                     // Check if RegisterConsoleCommands is called anywhere in the type
                     bool hasRegisterCall = TypeHasRegisterConsoleCommandsInvocation(typeSymbol, compilation);
