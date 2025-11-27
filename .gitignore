@@ -28,3 +28,6 @@ Limbo.Console.Sharp/.idea
 
 # Ignore Rider settings
 .idea
+
+# Ignore local NuGet config (proxy workaround)
+NuGet.Config
