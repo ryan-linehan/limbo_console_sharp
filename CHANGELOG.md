@@ -4,7 +4,15 @@ This change log is to help track when new version of the nuget package are publi
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Unreleased]
+## [0.0.1-beta-010] - 2025-11-26
+
+### Added
+
+- Support for inline string arrays in [AutoComplete] attribute, allowing autocomplete values to be defined directly without a separate method
+  - Supports traditional array syntax: `[AutoComplete(new string[] { "a", "b", "c" })]`
+  - Supports C# 12+ collection expressions: `[AutoComplete(["a", "b", "c"])]`
+  - Optimizes arrays to use static readonly fields for better performance
+- LIMBO1003 diagnostic warning that alerts developers when [ConsoleCommand] methods are not registered via `RegisterConsoleCommands()`
 
 ### Changed
 
@@ -12,6 +20,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
   - Eliminates string-to-StringName conversion overhead on every command registration
   - Provides consistent type-safe method references for all methods (regardless of parameter count)
   - Resolves issue #13
+- Improved warning messages for unregistered console commands and better error handling in source generator validation
+
+## [0.0.1-beta-009] - 2025-11-24
+
+- Added
+  - Parameter index support for [AutoComplete] attribute on methods with multiple parameters
+    - Specify which parameter should receive autocomplete with the second argument: `[AutoComplete(values, parameterIndex)]`
+
+- Changed
+  - Updated supported Godot version to any 4.X version (previously limited to 4.4.X)
+  - AutoComplete attribute now utilizes rule pattern for validation instead of inline evaluation
+  - Improved source generator validation errors to reflect in project
+  - Enhanced error handling and examples for suppressing generator warnings
 
 ## [0.0.1-beta-008] - 2025-05-31
 
