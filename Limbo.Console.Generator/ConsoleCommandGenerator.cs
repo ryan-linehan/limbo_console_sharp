@@ -22,7 +22,7 @@ namespace Limbo.Console.Sharp.Generator
         private static readonly DiagnosticDescriptor UnregisteredCommandsDescriptor = new DiagnosticDescriptor(
             id: "LIMBO1003",
             title: "RegisterConsoleCommands not called",
-            messageFormat: "Class '{0}' has [ConsoleCommand] attributes but RegisterConsoleCommands() is not called in any method",
+            messageFormat: "{0}.cs has [ConsoleCommand] attributes but RegisterConsoleCommands() is not called in any method",
             category: "Limbo.Console.Generator",
             DiagnosticSeverity.Warning,
             isEnabledByDefault: true,
