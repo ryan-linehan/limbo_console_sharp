@@ -170,6 +170,7 @@ namespace Limbo.Console.Sharp.Generator
 
 
             sb.AppendLine($"{accessibility} partial class {classSymbol.Name} {{");
+            AddInlineAutoCompleteFields(sb, methods);
             AddRegisterConsoleCommands(sb, methods);
             sb.AppendLine();
             AddUnregisterConsoleCommands(sb, methods);
@@ -204,10 +205,35 @@ namespace Limbo.Console.Sharp.Generator
             }
         }
 
+        private static string EscapeString(string value)
+        {
+            return value.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
+        }
+
+        private static void AddInlineAutoCompleteFields(StringBuilder sb, IEnumerable<CommandMethodInfo> methods)
+        {
+            var fieldCounter = 0;
+            foreach (var method in methods)
+            {
+                foreach (var autoComplete in method.AutoCompletes)
+                {
+                    if (autoComplete.IsInline)
+                    {
+                        var fieldName = $"__AutoComplete_{method.Method.Name}_{autoComplete.ArgIndex}_{fieldCounter++}";
+                        var values = string.Join(", ", autoComplete.InlineValues.Select(v => $"\"{EscapeString(v)}\""));
+                        sb.AppendLine($"  private static readonly StringName[] {fieldName} = new StringName[] {{ {values} }};");
+                    }
+                }
+            }
+            if (fieldCounter > 0)
+                sb.AppendLine();
+        }
+
         private static void AddRegisterConsoleCommands(StringBuilder sb, IEnumerable<CommandMethodInfo> methods)
         {
             sb.AppendLine(" private void RegisterConsoleCommands() {");
 
+            var fieldCounter = 0;
             foreach (var method in methods)
             {
                 var callable = $"new Callable(this, MethodName.{method.Method.Name})";
@@ -220,7 +246,17 @@ namespace Limbo.Console.Sharp.Generator
 
                 foreach (var autoComplete in method.AutoCompletes)
                 {
-                    sb.AppendLine($"    LimboConsole.AddArgumentAutocompleteSource(\"{method.Name}\", {autoComplete.ArgIndex}, Callable.From(() => {autoComplete.SourceMethod}()));");
+                    if (autoComplete.IsInline)
+                    {
+                        // Reference the static readonly field
+                        var fieldName = $"__AutoComplete_{method.Method.Name}_{autoComplete.ArgIndex}_{fieldCounter++}";
+                        sb.AppendLine($"    LimboConsole.AddArgumentAutocompleteSource(\"{method.Name}\", {autoComplete.ArgIndex}, Callable.From(() => {fieldName}));");
+                    }
+                    else
+                    {
+                        // Generate code for method name (existing behavior)
+                        sb.AppendLine($"    LimboConsole.AddArgumentAutocompleteSource(\"{method.Name}\", {autoComplete.ArgIndex}, Callable.From(() => {autoComplete.SourceMethod}()));");
+                    }
                 }
             }
 
