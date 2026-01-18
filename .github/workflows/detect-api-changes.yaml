@@ -27,10 +27,13 @@ jobs:
       - name: Checkout this repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          python-version: '3.11'
+          dotnet-version: '8.0.x'
+
+      - name: Build ApiChangeDetector
+        run: dotnet build tools/ApiChangeDetector/ApiChangeDetector.csproj -c Release
 
       - name: Fetch upstream limbo_console.gd
         run: |
@@ -51,7 +54,8 @@ jobs:
 
       - name: Extract upstream API
         run: |
-          python3 scripts/extract_api.py extract \
+          dotnet run --project tools/ApiChangeDetector/ApiChangeDetector.csproj -c Release -- \
+            extract \
             --input upstream_limbo_console.gd \
             --output upstream_api.json
 
@@ -63,8 +67,9 @@ jobs:
         run: |
           # Run comparison and capture output
           set +e
-          CHANGES=$(python3 scripts/extract_api.py compare \
-            --baseline scripts/api_baseline.json \
+          CHANGES=$(dotnet run --project tools/ApiChangeDetector/ApiChangeDetector.csproj -c Release -- \
+            compare \
+            --baseline tools/ApiChangeDetector/api_baseline.json \
             --input upstream_api.json \
             --format markdown)
           EXIT_CODE=$?
@@ -88,10 +93,10 @@ jobs:
         run: |
           UPSTREAM_REF="${{ github.event.inputs.upstream_ref || 'main' }}"
 
-          # Get the latest commit info from upstream
-          COMMIT_INFO=$(curl -sL "https://api.github.com/repos/${{ env.UPSTREAM_REPO }}/commits/${UPSTREAM_REF}" | head -c 2000)
-          COMMIT_SHA=$(echo "$COMMIT_INFO" | python3 -c "import sys, json; print(json.load(sys.stdin).get('sha', 'unknown')[:7])" 2>/dev/null || echo "unknown")
-          COMMIT_DATE=$(echo "$COMMIT_INFO" | python3 -c "import sys, json; print(json.load(sys.stdin).get('commit', {}).get('committer', {}).get('date', 'unknown')[:10])" 2>/dev/null || echo "unknown")
+          # Get the latest commit info from upstream using jq
+          COMMIT_INFO=$(curl -sL "https://api.github.com/repos/${{ env.UPSTREAM_REPO }}/commits/${UPSTREAM_REF}")
+          COMMIT_SHA=$(echo "$COMMIT_INFO" | jq -r '.sha // "unknown"' | cut -c1-7)
+          COMMIT_DATE=$(echo "$COMMIT_INFO" | jq -r '.commit.committer.date // "unknown"' | cut -c1-10)
 
           echo "commit_sha=${COMMIT_SHA}" >> $GITHUB_OUTPUT
           echo "commit_date=${COMMIT_DATE}" >> $GITHUB_OUTPUT
@@ -133,7 +138,7 @@ jobs:
           1. Review the changes above
           2. Update \`LimboConsole.cs\` and \`LimboConsoleStringNames.cs\` to match the new API
           3. Update the bundled plugin in \`demo/addons/limbo_console/\`
-          4. Regenerate the baseline: \`python3 scripts/extract_api.py extract -i demo/addons/limbo_console/limbo_console.gd -o scripts/api_baseline.json\`
+          4. Regenerate the baseline: \`dotnet run --project tools/ApiChangeDetector -- extract -i demo/addons/limbo_console/limbo_console.gd -o tools/ApiChangeDetector/api_baseline.json\`
           5. Update the version in \`version.txt\` if releasing
 
           ---
