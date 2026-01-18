@@ -1,0 +1,172 @@
+name: Detect Upstream API Changes
+
+on:
+  # Run weekly on Monday at 9 AM UTC
+  schedule:
+    - cron: '0 9 * * 1'
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: 'Upstream ref to check (branch, tag, or commit)'
+        required: false
+        default: 'main'
+
+env:
+  UPSTREAM_REPO: limbonaut/limbo_console
+  UPSTREAM_FILE: limbo_console/limbo_console.gd
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch upstream limbo_console.gd
+        run: |
+          UPSTREAM_REF="${{ github.event.inputs.upstream_ref || 'main' }}"
+          echo "Fetching from ${{ env.UPSTREAM_REPO }} at ref: ${UPSTREAM_REF}"
+
+          # Fetch the raw file from GitHub
+          curl -sL "https://raw.githubusercontent.com/${{ env.UPSTREAM_REPO }}/${UPSTREAM_REF}/${{ env.UPSTREAM_FILE }}" \
+            -o upstream_limbo_console.gd
+
+          if [ ! -s upstream_limbo_console.gd ]; then
+            echo "ERROR: Failed to fetch upstream file"
+            exit 1
+          fi
+
+          echo "Successfully fetched upstream file"
+          head -20 upstream_limbo_console.gd
+
+      - name: Extract upstream API
+        run: |
+          python3 scripts/extract_api.py extract \
+            --input upstream_limbo_console.gd \
+            --output upstream_api.json
+
+          echo "Extracted API:"
+          cat upstream_api.json
+
+      - name: Compare APIs
+        id: compare
+        run: |
+          # Run comparison and capture output
+          set +e
+          CHANGES=$(python3 scripts/extract_api.py compare \
+            --baseline scripts/api_baseline.json \
+            --input upstream_api.json \
+            --format markdown)
+          EXIT_CODE=$?
+          set -e
+
+          echo "Exit code: $EXIT_CODE"
+
+          if [ $EXIT_CODE -eq 1 ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "changes<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No API changes detected"
+          fi
+
+      - name: Get upstream version info
+        if: steps.compare.outputs.has_changes == 'true'
+        id: version
+        run: |
+          UPSTREAM_REF="${{ github.event.inputs.upstream_ref || 'main' }}"
+
+          # Get the latest commit info from upstream
+          COMMIT_INFO=$(curl -sL "https://api.github.com/repos/${{ env.UPSTREAM_REPO }}/commits/${UPSTREAM_REF}" | head -c 2000)
+          COMMIT_SHA=$(echo "$COMMIT_INFO" | python3 -c "import sys, json; print(json.load(sys.stdin).get('sha', 'unknown')[:7])" 2>/dev/null || echo "unknown")
+          COMMIT_DATE=$(echo "$COMMIT_INFO" | python3 -c "import sys, json; print(json.load(sys.stdin).get('commit', {}).get('committer', {}).get('date', 'unknown')[:10])" 2>/dev/null || echo "unknown")
+
+          echo "commit_sha=${COMMIT_SHA}" >> $GITHUB_OUTPUT
+          echo "commit_date=${COMMIT_DATE}" >> $GITHUB_OUTPUT
+
+      - name: Check for existing open issue
+        if: steps.compare.outputs.has_changes == 'true'
+        id: check_issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Search for existing open issues with our label
+          EXISTING=$(gh issue list --label "upstream-api-change" --state open --json number --jq '.[0].number // empty')
+
+          if [ -n "$EXISTING" ]; then
+            echo "existing_issue=$EXISTING" >> $GITHUB_OUTPUT
+            echo "Found existing issue #$EXISTING"
+          else
+            echo "existing_issue=" >> $GITHUB_OUTPUT
+            echo "No existing issue found"
+          fi
+
+      - name: Create or update issue
+        if: steps.compare.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_TITLE="Upstream API Change Detected in limbo_console"
+
+          ISSUE_BODY="The upstream [limbo_console](https://github.com/${{ env.UPSTREAM_REPO }}) repository has API changes that may require updates to the C# wrapper.
+
+          **Upstream ref:** ${{ github.event.inputs.upstream_ref || 'main' }}
+          **Commit:** ${{ steps.version.outputs.commit_sha }}
+          **Date:** ${{ steps.version.outputs.commit_date }}
+
+          ${{ steps.compare.outputs.changes }}
+
+          ## Action Required
+
+          1. Review the changes above
+          2. Update \`LimboConsole.cs\` and \`LimboConsoleStringNames.cs\` to match the new API
+          3. Update the bundled plugin in \`demo/addons/limbo_console/\`
+          4. Regenerate the baseline: \`python3 scripts/extract_api.py extract -i demo/addons/limbo_console/limbo_console.gd -o scripts/api_baseline.json\`
+          5. Update the version in \`version.txt\` if releasing
+
+          ---
+          *This issue was automatically created by the [detect-api-changes workflow](https://github.com/${{ github.repository }}/actions/workflows/detect-api-changes.yaml)*"
+
+          if [ -n "${{ steps.check_issue.outputs.existing_issue }}" ]; then
+            # Update existing issue with a comment
+            gh issue comment "${{ steps.check_issue.outputs.existing_issue }}" \
+              --body "## Updated API Changes (${{ steps.version.outputs.commit_date }})
+
+          ${{ steps.compare.outputs.changes }}
+
+          *Upstream commit: ${{ steps.version.outputs.commit_sha }}*"
+
+            echo "Updated existing issue #${{ steps.check_issue.outputs.existing_issue }}"
+          else
+            # Create new issue
+            gh issue create \
+              --title "$ISSUE_TITLE" \
+              --body "$ISSUE_BODY" \
+              --label "upstream-api-change"
+
+            echo "Created new issue"
+          fi
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.compare.outputs.has_changes }}" == "true" ]; then
+            echo "## API Changes Detected" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.compare.outputs.changes }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## No API Changes" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The upstream limbo_console API matches the current baseline." >> $GITHUB_STEP_SUMMARY
+          fi

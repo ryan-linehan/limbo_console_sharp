@@ -1,0 +1,383 @@
+{
+  "source_file": "limbo_console.gd",
+  "signals": [
+    {
+      "name": "toggled",
+      "args": [
+        "is_shown"
+      ]
+    }
+  ],
+  "properties": [
+    {
+      "name": "enabled",
+      "type": "bool"
+    }
+  ],
+  "public_functions": [
+    {
+      "name": "open_console",
+      "args": [],
+      "return_type": "void"
+    },
+    {
+      "name": "close_console",
+      "args": [],
+      "return_type": "void"
+    },
+    {
+      "name": "is_open",
+      "args": [],
+      "return_type": "bool"
+    },
+    {
+      "name": "toggle_console",
+      "args": [],
+      "return_type": "void"
+    },
+    {
+      "name": "toggle_history",
+      "args": [],
+      "return_type": "void"
+    },
+    {
+      "name": "clear_console",
+      "args": [],
+      "return_type": "void"
+    },
+    {
+      "name": "erase_history",
+      "args": [],
+      "return_type": "void"
+    },
+    {
+      "name": "info",
+      "args": [
+        {
+          "name": "p_line",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "error",
+      "args": [
+        {
+          "name": "p_line",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "warn",
+      "args": [
+        {
+          "name": "p_line",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "debug",
+      "args": [
+        {
+          "name": "p_line",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "print_boxed",
+      "args": [
+        {
+          "name": "p_line",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "print_line",
+      "args": [
+        {
+          "name": "p_line",
+          "type": "String",
+          "has_default": false
+        },
+        {
+          "name": "p_stdout",
+          "type": "bool",
+          "has_default": true
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "register_command",
+      "args": [
+        {
+          "name": "p_func",
+          "type": "Callable",
+          "has_default": false
+        },
+        {
+          "name": "p_name",
+          "type": "String",
+          "has_default": true
+        },
+        {
+          "name": "p_desc",
+          "type": "String",
+          "has_default": true
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "unregister_command",
+      "args": [
+        {
+          "name": "p_func_or_name",
+          "type": "Variant",
+          "has_default": false
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "has_command",
+      "args": [
+        {
+          "name": "p_name",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "bool"
+    },
+    {
+      "name": "get_command_names",
+      "args": [
+        {
+          "name": "p_include_aliases",
+          "type": "bool",
+          "has_default": true
+        }
+      ],
+      "return_type": "PackedStringArray"
+    },
+    {
+      "name": "get_command_description",
+      "args": [
+        {
+          "name": "p_name",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "String"
+    },
+    {
+      "name": "add_alias",
+      "args": [
+        {
+          "name": "p_alias",
+          "type": "String",
+          "has_default": false
+        },
+        {
+          "name": "p_command_to_run",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "remove_alias",
+      "args": [
+        {
+          "name": "p_name",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "has_alias",
+      "args": [
+        {
+          "name": "p_name",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "bool"
+    },
+    {
+      "name": "get_aliases",
+      "args": [],
+      "return_type": "PackedStringArray"
+    },
+    {
+      "name": "get_alias_argv",
+      "args": [
+        {
+          "name": "p_alias",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "PackedStringArray"
+    },
+    {
+      "name": "add_argument_autocomplete_source",
+      "args": [
+        {
+          "name": "p_command",
+          "type": "String",
+          "has_default": false
+        },
+        {
+          "name": "p_argument",
+          "type": "int",
+          "has_default": false
+        },
+        {
+          "name": "p_source",
+          "type": "Callable",
+          "has_default": false
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "execute_command",
+      "args": [
+        {
+          "name": "p_command_line",
+          "type": "String",
+          "has_default": false
+        },
+        {
+          "name": "p_silent",
+          "type": "bool",
+          "has_default": true
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "execute_script",
+      "args": [
+        {
+          "name": "p_file",
+          "type": "String",
+          "has_default": false
+        },
+        {
+          "name": "p_silent",
+          "type": "bool",
+          "has_default": true
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "format_tip",
+      "args": [
+        {
+          "name": "p_text",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "String"
+    },
+    {
+      "name": "format_name",
+      "args": [
+        {
+          "name": "p_name",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "String"
+    },
+    {
+      "name": "usage",
+      "args": [
+        {
+          "name": "p_command",
+          "type": "String",
+          "has_default": false
+        }
+      ],
+      "return_type": "Error"
+    },
+    {
+      "name": "add_eval_input",
+      "args": [
+        {
+          "name": "p_name",
+          "type": "String",
+          "has_default": false
+        },
+        {
+          "name": "p_value",
+          "type": "Variant",
+          "has_default": false
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "remove_eval_input",
+      "args": [
+        {
+          "name": "p_name",
+          "type": "Variant",
+          "has_default": false
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "get_eval_input_names",
+      "args": [],
+      "return_type": "PackedStringArray"
+    },
+    {
+      "name": "get_eval_inputs",
+      "args": [],
+      "return_type": "Array"
+    },
+    {
+      "name": "set_eval_base_instance",
+      "args": [
+        {
+          "name": "object",
+          "type": "Variant",
+          "has_default": false
+        }
+      ],
+      "return_type": "void"
+    },
+    {
+      "name": "get_eval_base_instance",
+      "args": [],
+      "return_type": "void"
+    }
+  ]
+}
